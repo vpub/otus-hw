@@ -1,0 +1,32 @@
+# Подключаемся к образу centos, установленному на lvm
+vagrant up
+vagrant ssh
+
+# Меняем пользователя
+sudo su
+cd
+
+# Проверяем текущее название группы
+vgs
+
+# Переименовываем название группы
+vgrename VolGroup00 newvg
+
+# Меняем старое название группы на новое там, где это необходимо для корректной загрузки системы
+sed -i 's/VolGroup00/newvg/g' /etc/fstab
+sed -i 's/VolGroup00/newvg/g' /etc/default/grub
+sed -i 's/VolGroup00/newvg/g' /boot/grub2/grub.cfg
+
+# Пересоздаем initrd image, чтобы он знал новое название Volume Group
+mkinitrd -f -v /boot/initramfs-$(uname -r).img $(uname -r)
+
+# Выходим из образа
+exit
+exit
+
+# Перезапускаем и подключаемся к образу
+vagrant reload
+vagrant ssh
+
+# Проверяем корректность переименования
+sudo vgs
