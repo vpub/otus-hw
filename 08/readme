@@ -1,0 +1,4 @@
+1. Запускаем vagrant up
+2. Подключаемся к виртуальной машине vagrant ssh
+3. Смотрим локальный репозиторий lynx http://localhost/localrepo
+4. Проверяем, что репозиторий подключился sudo yum repolist enabled
