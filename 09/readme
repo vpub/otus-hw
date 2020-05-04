@@ -1,0 +1,16 @@
+1. Запускаем vagrant up
+2. Подключаемся к виртуальной машине vagrant ssh
+3. Пробуем подключиться к локальной машине по ssh в выходные дни пользователями admin (пароль admin) и test (пароль test). Пользователям группы admin разрешено это делать, остальным нет.
+
+ssh admin@localhost
+ssh test@localhost
+
+4. Меняем пользователя на dockerUser (пароль dockeruser) и пробуем рестартить docker
+
+su - dockerUser
+systemctl restart docker
+
+Теперь пользователь dockerUser может останавливать и рестартить сервис docker. Но и другие юниты тоже, что не очень хорошо.
+
+Альтернативно, чтобы разрешить только рестарт docker, можно отредактировать sudoers через visudo, вставив в конец:
+%dockerUser ALL=NOPASSWD: /bin/systemctl restart docker.service
