@@ -1,0 +1,14 @@
+[root@localhost ~]# tail -f /var/log/messages 
+Jul  5 11:27:34 localhost systemd: Started Watchlog service.
+Jul  5 11:28:33 localhost systemd: Starting Watchlog service...
+Jul  5 11:28:33 localhost root: Sun Jul  5 11:28:33 UTC 2020: FOUND YOUR WORD
+Jul  5 11:28:33 localhost systemd: Started Watchlog service.
+Jul  5 11:29:33 localhost systemd: Starting Watchlog service...
+Jul  5 11:29:33 localhost root: Sun Jul  5 11:29:33 UTC 2020: FOUND YOUR WORD
+Jul  5 11:29:33 localhost systemd: Started Watchlog service.
+Jul  5 11:30:33 localhost systemd: Starting Watchlog service...
+Jul  5 11:30:33 localhost root: Sun Jul  5 11:30:33 UTC 2020: FOUND YOUR WORD
+Jul  5 11:30:33 localhost systemd: Started Watchlog service.
+Jul  5 11:31:33 localhost systemd: Starting Watchlog service...
+Jul  5 11:31:33 localhost root: Sun Jul  5 11:31:33 UTC 2020: FOUND YOUR WORD
+Jul  5 11:31:33 localhost systemd: Started Watchlog service.
