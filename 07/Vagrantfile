@@ -1,0 +1,6 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+  config.vm.provision "watchlog", type: "shell", path: "./script/watchlog_init.sh"
+  config.vm.provision "httpd2services", type: "shell", path: "./script/httpd_init.sh"
+  config.vm.provision "jira", type: "shell", path: "./script/jira_init.sh"
+end
