@@ -23,7 +23,7 @@ sudo tail -f /var/log/messages
 Вывод в /result/watchlog
 
 3. Несколько httpd
-sudo ss -tnulp | grep httpd
+sudo ss -tunlp | grep httpd
 Вывод в /result/httpd
 
 3. Jira
@@ -37,8 +37,8 @@ LimitNOFILE=20000
 LimitNICE=15
 MemoryLimit=900M
 
-Для службы настроена опция Restart=on-failure и таймаут перезапуска 60 сек. on-failure рекомендуется для служб, которые должны работать постоянно.
+Для службы настроена опция Restart=on-failure и таймаут перезапуска 5 сек. on-failure рекомендуется для служб, которые должны работать постоянно.
 Проверяем: узнаем pid - ps aux | grep jira
 убиваем процесс kill -9 PID
-Если проверить через 60 секунд, то служба будет опять запущена.
+Если проверить через 5 секунд, то служба будет опять запущена.
 sudo systemctl status jira
