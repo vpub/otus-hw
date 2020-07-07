@@ -1,0 +1,119 @@
+SELinux - когда все запрещено
+
+1. Запустить nginx на нестандартном порту 3-мя разными способами:
+- переключатели setsebool;
+- добавление нестандартного порта в имеющийся тип;
+- формирование и установка модуля SELinux.
+К сдаче:
+- README с описанием каждого решения (скриншоты и демонстрация приветствуются).
+
+2. Обеспечить работоспособность приложения при включенном selinux.
+- Развернуть приложенный стенд
+https://github.com/mbfx/otus-linux-adm/blob/master/selinux_dns_problems/
+- Выяснить причину неработоспособности механизма обновления зоны (см. README);
+- Предложить решение (или решения) для данной проблемы;
+- Выбрать одно из решений для реализации, предварительно обосновав выбор;
+- Реализовать выбранное решение и продемонстрировать его работоспособность.
+К сдаче:
+- README с анализом причины неработоспособности, возможными способами решения и обоснованием выбора одного из них;
+- Исправленный стенд или демонстрация работоспособной системы скриншотами и описанием.
+
+
+================[Выполнение. Часть 1]================
+
+При запуске nginx на нестандартном порту мы получим ошибку. Это работа SELinux.
+Если все таки необходимо запустить nginx на этом порту, проделаем следующие действия:
+1. С помощью утилиты sealert сгенерируем отчет об ошибках. Отчет дает исчерпывающую информацию о проблеме, а также предлагает пути решения. Воспользуемся ими. Для решения проблемы достаточно выполнить одну из рекомендаций.
+
+## SELinux is preventing /usr/sbin/nginx from name_bind access on the tcp_socket port 1234.
+
+2. Добавим наш порт в имеюшийся тип с помощью команды (список включенных портов можно посмотреть командой semanage port -l | grep http):
+semanage port -a -t http_port_t -p tcp 1234
+
+3. Воспользуемся изменением значения переключателя 'nis_enabled' (Network Information System). Чтобы изменения сохранились после перезагрузки добавим ключ -P.
+setsebool -P nis_enabled 1
+
+4. Сформируем модуль.
+ausearch -c 'nginx' --raw | audit2allow -M my-nginx
+semodule -i my-nginx.pp
+
+5. Перезапускаем nginx. Все ок.
+
+
+================[Выполнение. Часть 2]================
+
+Для начала отключим SELinux и проверим наличие ошибки. Ошибок нет. 
+Продолжаем разбираться. Проанализируем логи с помощью утилит audit2why и sealert.
+
+audit2why < /var/log/audit/audit.log
+sealert -a /var/log/audit/audit.log
+
+Утилиты предлагают нам с помошью audit2allow создать ращрешающий модуль, но этот путь не очень хороший, потому как можно предоставить какому-либо приложению слишком широкие полномочия.
+
+На следующем шаге помог разбор багрепорта (https://bugzilla.redhat.com/show_bug.cgi?id=518749). Посмотрим SELinux context динамической директории (где расположена зона узнали из конфига named):
+[root@ns01 ~]# ls -dZ /etc/named/dynamic/
+drw-rwx---. root named unconfined_u:object_r:etc_t:s0   /etc/named/dynamic/
+
+Видим тип etc_t, а должен быть (https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/selinux_users_and_administrators_guide/sect-managing_confined_services-bind-configuration_examples) named_cache_t. 
+Собственно поменяем контекст:
+[root@ns01 ~]# restorecon -R -v /etc/named/dynamic/
+Еще раз проверяем контекст:
+[root@ns01 ~]# ls -dZ /etc/named/dynamic/
+drw-rwx---. root named unconfined_u:object_r:named_cache_t:s0 /etc/named/dynamic/
+Все корректно.
+
+Пробуем изменить зону:
+
+[vagrant@client ~]$ dig @192.168.50.10 ns01.dns.lab
+
+; <<>> DiG 9.11.4-P2-RedHat-9.11.4-16.P2.el7_8.6 <<>> @192.168.50.10 ns01.dns.lab
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 5344
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;ns01.dns.lab.			IN	A
+
+;; ANSWER SECTION:
+ns01.dns.lab.		3600	IN	A	192.168.50.10
+
+;; AUTHORITY SECTION:
+dns.lab.		3600	IN	NS	ns01.dns.lab.
+
+;; Query time: 19 msec
+;; SERVER: 192.168.50.10#53(192.168.50.10)
+;; WHEN: Tue Jul 07 16:13:41 UTC 2020
+;; MSG SIZE  rcvd: 71
+
+[vagrant@client ~]$ nsupdate -k /etc/named.zonetransfer.key
+> server 192.168.50.10
+> zone ddns.lab
+> update add www.ddns.lab. 60 A 192.168.50.15
+> send
+> quit
+
+[vagrant@client ~]$ rndc -c ~/rndc.conf reload
+server reload successful
+
+[vagrant@client ~]$ dig +noall +answer www.ddns.lab
+www.ddns.lab.		60	IN	A	192.168.50.15
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
