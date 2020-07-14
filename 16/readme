@@ -1,0 +1,53 @@
+=========[задача]=============
+
+в вагранте поднимаем 2 машины web и log
+на web поднимаем nginx
+на log настраиваем центральный лог сервер на любой системе на выбор
+- journald
+- rsyslog
+- elk
+настраиваем аудит следящий за изменением конфигов нжинкса
+
+все критичные логи с web должны собираться и локально и удаленно
+все логи с nginx должны уходить на удаленный сервер (локально только критичные)
+логи аудита должны также уходить на удаленную систему
+
+===============[решение]================
+
+1. Поднимаем виртуальные машины
+vagrant up
+
+2. На машине web
+vagrant ssh web
+sudo -i
+logger -p local7.crit "Test critical log"
+
+curl localhost
+curl localhost/ksljdfkl
+
+[root@web ~]# tail /var/log/boot.log 
+Jul 14 15:07:24 web vagrant: Test critical log
+
+vi /etc/nginx/nginx.conf
+#сделать изменение
+
+3. На машине log
+vagrant ssh log
+sudo -i
+
+[root@log ~]# tail /var/log/rsyslog/web/vagrant.log 
+Jul 14 15:07:24 web vagrant: Test critical log
+
+[root@log ~]# ausearch -k nginx_watch
+----
+time->Tue Jul 14 14:28:57 2020
+node=web type=CONFIG_CHANGE msg=audit(1594736937.697:996): auid=4294967295 ses=4294967295 subj=system_u:system_r:unconfined_service_t:s0 op=add_rule key="nginx_watch" list=4 res=1
+----
+time->Tue Jul 14 15:06:40 2020
+node=web type=PROCTITLE msg=audit(1594739200.207:1072): proctitle="mc"
+node=web type=PATH msg=audit(1594739200.207:1072): item=2 name="/etc/nginx/.#nginx.conf" inode=67149907 dev=08:01 mode=0120777 ouid=0 ogid=0 rdev=00:00 obj=unconfined_u:object_r:httpd_config_t:s0 objtype=CREATE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0
+node=web type=PATH msg=audit(1594739200.207:1072): item=1 name="/etc/nginx/" inode=67149944 dev=08:01 mode=040755 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:httpd_config_t:s0 objtype=PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0
+node=web type=PATH msg=audit(1594739200.207:1072): item=0 name="root@web.5656" objtype=UNKNOWN cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0
+node=web type=CWD msg=audit(1594739200.207:1072):  cwd="/etc/nginx"
+
+[часть вывода ausearch]
