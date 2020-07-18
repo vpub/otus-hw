@@ -1,0 +1,43 @@
+============[Задание]=================
+взять стенд https://github.com/erlong15/vagrant-bind
+добавить еще один сервер client2
+завести в зоне dns.lab
+имена
+web1 - смотрит на клиент1
+web2 смотрит на клиент2
+
+завести еще одну зону newdns.lab
+завести в ней запись
+www - смотрит на обоих клиентов
+
+настроить split-dns
+клиент1 - видит обе зоны, но в зоне dns.lab только web1
+
+клиент2 видит только dns.lab
+
+*) настроить все без выключения selinux
+
+
+============[Решение]=================
+
+1. Разворачиваем измененный стенд:
+vagrant up
+
+2. Заходим на client1
+
+[root@client1 ~]# host www.newdns.lab
+www.newdns.lab has address 192.168.50.15
+www.newdns.lab has address 192.168.50.16
+[root@client1 ~]# host web1.dns.lab
+web1.dns.lab has address 192.168.50.15
+[root@client1 ~]# host web2.dns.lab
+Host web2.dns.lab not found: 3(NXDOMAIN)
+
+3. Заходим на client2
+
+[root@client2 ~]# host www.newdns.lab
+Host www.newdns.lab not found: 3(NXDOMAIN)
+[root@client2 ~]# host web1.dns.lab
+web1.dns.lab has address 192.168.50.15
+[root@client2 ~]# host web2.dns.lab
+web2.dns.lab has address 192.168.50.16
