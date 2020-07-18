@@ -1,0 +1,74 @@
+=========[Проверка]=============
+
+1. Поднять виртуальные машины
+vagrant up
+
+2. Подключиться к centralRouter
+vagrant ssh centralRouter
+Выполнить:
+- ssh 10.10.10.1 (пароль vagrant)
+
+- sudo bash /vagrant/knock.sh 10.10.10.1 8882 7772 9992
+  ssh 10.10.10.1 (пароль vagrant)
+
+[vagrant@centralRouter ~]$ ssh 10.10.10.1
+^C
+
+[vagrant@centralRouter ~]$ sudo bash /vagrant/knock.sh 10.10.10.1 8881 7777 9991
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2020-07-18 10:25 UTC
+Warning: 10.10.10.1 giving up on port because retransmission cap hit (0).
+Nmap scan report for 10.10.10.1
+Host is up (0.00038s latency).
+PORT     STATE    SERVICE
+8881/tcp filtered unknown
+MAC Address: 08:00:27:1B:11:1D (Cadmus Computer Systems)
+
+Nmap done: 1 IP address (1 host up) scanned in 0.35 seconds
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2020-07-18 10:25 UTC
+Warning: 10.10.10.1 giving up on port because retransmission cap hit (0).
+Nmap scan report for 10.10.10.1
+Host is up (0.00040s latency).
+PORT     STATE    SERVICE
+7777/tcp filtered cbt
+MAC Address: 08:00:27:1B:11:1D (Cadmus Computer Systems)
+
+Nmap done: 1 IP address (1 host up) scanned in 0.34 seconds
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2020-07-18 10:25 UTC
+Warning: 10.10.10.1 giving up on port because retransmission cap hit (0).
+Nmap scan report for 10.10.10.1
+Host is up (0.00047s latency).
+PORT     STATE    SERVICE
+9991/tcp filtered issa
+MAC Address: 08:00:27:1B:11:1D (Cadmus Computer Systems)
+
+Nmap done: 1 IP address (1 host up) scanned in 0.34 seconds
+[vagrant@centralRouter ~]$ ssh 10.10.10.1
+The authenticity of host '10.10.10.1 (10.10.10.1)' can't be established.
+RSA key fingerprint is SHA256:MMQzlb97kMwc8U9ByEqD2kBrYtjKjMJ2E7w/pyWxtm0.
+RSA key fingerprint is MD5:ad:03:3a:0b:a1:ca:ef:53:eb:60:84:26:c4:5d:52:7d.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '10.10.10.1' (RSA) to the list of known hosts.
+vagrant@10.10.10.1's password: 
+[vagrant@inetRouter ~]$ exit
+logout
+Connection to 10.10.10.1 closed.
+
+3. В консоли на локальной машине выполнить curl http://192.168.11.171:8080
+
+4. Подключиться к centralServer
+vagrant ssh centralServer
+Выполнить: traceroute ya.ru
+
+[vagrant@centralServer ~]$ traceroute ya.ru
+traceroute to ya.ru (87.250.250.242), 30 hops max, 60 byte packets
+ 1  gateway (192.168.0.1)  0.294 ms  0.170 ms  0.158 ms
+ 2  10.10.10.1 (10.10.10.1)  0.661 ms  0.526 ms  0.467 ms
+ 3  * * *
+ 4  * * *
+ 5  * * *
+ 6  subdomain.domain.com (XXX.XXX.XXX.XXX)  78.347 ms  95.077 ms  79.057 ms
+ 7  subdomain.domain.com (XXX.XXX.XXX.XXX)  125.936 ms  126.207 ms  125.887 ms
+ 8  ya.ru (87.250.250.242)  144.243 ms  143.289 ms  129.509 ms
