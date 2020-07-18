@@ -1,0 +1,69 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+
+  :node01 => {
+    :box_name => "centos/7",
+    :net => [
+              {adapter: 2, auto_config: false, virtualbox__intnet: "vlan100"},
+              {adapter: 3, auto_config: false, virtualbox__intnet: "vlan300"},
+              {ip: '10.10.10.1', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "r1"},
+            ]
+  },
+  :node02 => {
+    :box_name => "centos/7",
+    :net => [
+              {adapter: 2, auto_config: false, virtualbox__intnet: "vlan100"},
+              {adapter: 3, auto_config: false, virtualbox__intnet: "vlan200"},
+              {ip: '10.20.20.1', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "r2"},
+            ]
+  },
+
+  :node03 => {
+    :box_name => "centos/7",
+    :net => [
+              {adapter: 2, auto_config: false, virtualbox__intnet: "vlan200"},
+              {adapter: 3, auto_config: false, virtualbox__intnet: "vlan300"},
+              {ip: '10.30.30.1', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "r3"},
+            ]
+  },
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+
+        box.vm.box = boxconfig[:box_name]
+        box.vm.host_name = boxname.to_s
+
+        config.vm.provider "virtualbox" do |v|
+          v.memory = 256
+        end
+
+        boxconfig[:net].each do |ipconf|
+          box.vm.network "private_network", ipconf
+        end
+
+        if boxconfig.key?(:public)
+          box.vm.network "public_network", boxconfig[:public]
+        end
+
+        box.vm.provision "shell", inline: <<-SHELL
+          mkdir -p ~root/.ssh
+          cp ~vagrant/.ssh/auth* ~root/.ssh
+        SHELL
+
+      end
+
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.verbose = "vvv"
+    ansible.playbook = "playbook.yml"
+    ansible.become = "true"
+  end
+
+end

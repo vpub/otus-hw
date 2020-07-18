@@ -1,0 +1,4 @@
+[nodes]
+node01 ansible_host=127.0.0.1 ansible_user=vagrant
+node02 ansible_host=127.0.0.1 ansible_user=vagrant
+node03 ansible_host=127.0.0.1 ansible_user=vagrant

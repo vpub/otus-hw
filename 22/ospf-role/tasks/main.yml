@@ -1,0 +1,93 @@
+---
+   - name: Enable forwarding
+     sysctl:
+       name: net.ipv4.ip_forward
+       value: 1
+       sysctl_set: yes
+       state: present
+       reload: yes
+
+   - sysctl:
+       name: net.ipv4.conf.all.forwarding
+       value: 1
+       sysctl_set: yes
+       state: present
+       reload: yes
+
+   - sysctl:
+       name: net.ipv4.conf.all.rp_filter
+       value: 0
+       sysctl_set: yes
+       state: present
+       reload: yes
+
+   - name: Install quagga
+     yum:
+       name: quagga
+       state: latest
+
+   - name: Copy r1 config files
+     block:
+       - name: Copy task
+         copy: src={{ item.src }} dest={{ item.dest }}
+         with_items:
+           - { src: 'ospfd-r1.conf', dest: '/etc/quagga/ospfd.conf' }
+           - { src: 'zebra-r1.conf', dest: '/etc/quagga/zebra.conf' }
+           - { src: 'ifcfg-vlan100-r1', dest: '/etc/sysconfig/network-scripts/ifcfg-vlan100' }
+           - { src: 'ifcfg-vlan300-r1', dest: '/etc/sysconfig/network-scripts/ifcfg-vlan300' }
+     when: ansible_hostname == "node01"
+
+   - name: Copy R2 config files
+     block:
+       - name: Copy task
+         copy: src={{ item.src }} dest={{ item.dest }}
+         with_items:
+           - { src: 'ospfd-r2.conf', dest: '/etc/quagga/ospfd.conf' }
+           - { src: 'zebra-r2.conf', dest: '/etc/quagga/zebra.conf' }
+           - { src: 'ifcfg-vlan100-r2', dest: '/etc/sysconfig/network-scripts/ifcfg-vlan100' }
+           - { src: 'ifcfg-vlan200-r2', dest: '/etc/sysconfig/network-scripts/ifcfg-vlan200' }
+     when: ansible_hostname == "node02"
+
+   - name: Copy R3 config files
+     block:
+       - name: Copy task
+         copy: src={{ item.src }} dest={{ item.dest }}
+         with_items:
+           - { src: 'ospfd-r3.conf', dest: '/etc/quagga/ospfd.conf' }
+           - { src: 'zebra-r3.conf', dest: '/etc/quagga/zebra.conf' }
+           - { src: 'ifcfg-vlan300-r3', dest: '/etc/sysconfig/network-scripts/ifcfg-vlan300' }
+           - { src: 'ifcfg-vlan200-r3', dest: '/etc/sysconfig/network-scripts/ifcfg-vlan200' }
+     when: ansible_hostname == "node03"
+
+   - name: change file ownership ospfd.conf
+     file:
+        path: /etc/quagga/ospfd.conf
+        owner: quagga
+        group: quagga
+        
+   - name: change file ownership zebra.conf
+     file:
+        path: /etc/quagga/zebra.conf
+        owner: quagga
+        group: quagga
+
+   - name: Start and Enable zebra
+     service:
+       name: zebra
+       state: started
+       enabled: True
+
+#   - name: Change policy and state of SELinux
+#     selinux:
+#       state: disabled
+
+   - name: Start and Enable ospfd
+     service:
+       name: ospfd
+       state: started
+       enabled: True
+
+   - name: Restart network
+     service:
+       name: network
+       state: restarted

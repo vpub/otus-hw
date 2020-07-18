@@ -1,0 +1,7 @@
+---
+- name: Install OSPF
+  hosts: all
+  become: true
+
+  roles:
+   - ospf-role

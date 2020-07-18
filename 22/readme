@@ -1,0 +1,181 @@
+==============[Задание]================
+- Поднять три виртуалки
+- Объединить их разными vlan
+1. Поднять OSPF между машинами на базе Quagga
+2. Изобразить ассиметричный роутинг
+3. Сделать один из линков "дорогим", но что бы при этом роутинг был симметричным
+
+Формат сдачи:
+Vagrantfile + ansible
+
+==============[Выполнение и результаты]================
+
+1. Разворачиваем стенд
+vagrant up
+
+2. Проверяем маршруты и работу quagga на node{01-03}
+
+[root@node01 ~]# ip r
+default via 10.0.2.2 dev eth0 proto dhcp metric 100 
+10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric 100 
+10.10.10.0/24 dev eth3 proto kernel scope link src 10.10.10.1 metric 103 
+10.20.20.0/24 via 192.168.10.2 dev vlan100 proto zebra metric 20 
+10.30.30.0/24 via 192.168.30.1 dev vlan300 proto zebra metric 20 
+192.168.10.0/24 dev vlan100 proto kernel scope link src 192.168.10.1 metric 400 
+192.168.20.0/24 proto zebra metric 20 
+	nexthop via 192.168.10.2 dev vlan100 weight 1 
+	nexthop via 192.168.30.1 dev vlan300 weight 1 
+192.168.30.0/24 dev vlan300 proto kernel scope link src 192.168.30.2 metric 401 
+[root@node01 ~]# vtysh 
+
+Hello, this is Quagga (version 0.99.22.4).
+Copyright 1996-2005 Kunihiro Ishiguro, et al.
+
+node01# show  ip ospf  neighbor  
+
+    Neighbor ID Pri State           Dead Time Address         Interface            RXmtL RqstL DBsmL
+10.20.20.1        1 Full/Backup       33.197s 192.168.10.2    vlan100:192.168.10.1     0     0     0
+10.30.30.1        1 Full/Backup       37.594s 192.168.30.1    vlan300:192.168.30.2     0     0     0
+node01# show  ip ospf  route  
+============ OSPF network routing table ============
+N    10.10.10.0/24         [10] area: 0.0.0.1
+                           directly attached to eth3
+N IA 10.20.20.0/24         [20] area: 0.0.0.0
+                           via 192.168.10.2, vlan100
+N IA 10.30.30.0/24         [20] area: 0.0.0.0
+                           via 192.168.30.1, vlan300
+N    192.168.10.0/24       [10] area: 0.0.0.0
+                           directly attached to vlan100
+N    192.168.20.0/24       [20] area: 0.0.0.0
+                           via 192.168.10.2, vlan100
+                           via 192.168.30.1, vlan300
+N    192.168.30.0/24       [10] area: 0.0.0.0
+                           directly attached to vlan300
+
+============ OSPF router routing table =============
+R    10.20.20.1            [10] area: 0.0.0.0, ABR
+                           via 192.168.10.2, vlan100
+R    10.30.30.1            [10] area: 0.0.0.0, ABR
+                           via 192.168.30.1, vlan300
+
+============ OSPF external routing table ===========
+
+
+
+[root@node02 ~]# ip r
+default via 10.0.2.2 dev eth0 proto dhcp metric 100 
+10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric 100 
+10.10.10.0/24 via 192.168.10.1 dev vlan100 proto zebra metric 20 
+10.20.20.0/24 dev eth3 proto kernel scope link src 10.20.20.1 metric 103 
+10.30.30.0/24 via 192.168.20.2 dev vlan200 proto zebra metric 20 
+192.168.10.0/24 dev vlan100 proto kernel scope link src 192.168.10.2 metric 401 
+192.168.20.0/24 dev vlan200 proto kernel scope link src 192.168.20.1 metric 400 
+192.168.30.0/24 proto zebra metric 20 
+	nexthop via 192.168.20.2 dev vlan200 weight 1 
+	nexthop via 192.168.10.1 dev vlan100 weight 1 
+[root@node02 ~]# vtysh 
+
+Hello, this is Quagga (version 0.99.22.4).
+Copyright 1996-2005 Kunihiro Ishiguro, et al.
+
+node02# show  ip ospf  neighbor  
+
+    Neighbor ID Pri State           Dead Time Address         Interface            RXmtL RqstL DBsmL
+10.30.30.1        1 Full/Backup       33.582s 192.168.20.2    vlan200:192.168.20.1     0     0     0
+10.10.10.1        1 Full/DR           31.253s 192.168.10.1    vlan100:192.168.10.2     0     0     0
+node02# show  ip ospf  route  
+============ OSPF network routing table ============
+N IA 10.10.10.0/24         [20] area: 0.0.0.0
+                           via 192.168.10.1, vlan100
+N    10.20.20.0/24         [10] area: 0.0.0.1
+                           directly attached to eth3
+N IA 10.30.30.0/24         [20] area: 0.0.0.0
+                           via 192.168.20.2, vlan200
+N    192.168.10.0/24       [10] area: 0.0.0.0
+                           directly attached to vlan100
+N    192.168.20.0/24       [10] area: 0.0.0.0
+                           directly attached to vlan200
+N    192.168.30.0/24       [20] area: 0.0.0.0
+                           via 192.168.20.2, vlan200
+                           via 192.168.10.1, vlan100
+
+============ OSPF router routing table =============
+R    10.10.10.1            [10] area: 0.0.0.0, ABR
+                           via 192.168.10.1, vlan100
+R    10.30.30.1            [10] area: 0.0.0.0, ABR
+                           via 192.168.20.2, vlan200
+
+============ OSPF external routing table ===========
+
+
+
+[root@node03 ~]# ip r
+default via 10.0.2.2 dev eth0 proto dhcp metric 100 
+10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric 100 
+10.10.10.0/24 via 192.168.30.2 dev vlan300 proto zebra metric 20 
+10.20.20.0/24 via 192.168.20.1 dev vlan200 proto zebra metric 20 
+10.30.30.0/24 dev eth3 proto kernel scope link src 10.30.30.1 metric 103 
+192.168.10.0/24 proto zebra metric 20 
+	nexthop via 192.168.30.2 dev vlan300 weight 1 
+	nexthop via 192.168.20.1 dev vlan200 weight 1 
+192.168.20.0/24 dev vlan200 proto kernel scope link src 192.168.20.2 metric 401 
+192.168.30.0/24 dev vlan300 proto kernel scope link src 192.168.30.1 metric 400 
+[root@node03 ~]# vtysh 
+
+Hello, this is Quagga (version 0.99.22.4).
+Copyright 1996-2005 Kunihiro Ishiguro, et al.
+
+node03# show  ip ospf  neighbor  
+
+    Neighbor ID Pri State           Dead Time Address         Interface            RXmtL RqstL DBsmL
+10.10.10.1        1 Full/DR           39.924s 192.168.30.2    vlan300:192.168.30.1     0     0     0
+10.20.20.1        1 Full/DR           37.766s 192.168.20.1    vlan200:192.168.20.2     0     0     0
+node03# show  ip ospf  route  
+============ OSPF network routing table ============
+N IA 10.10.10.0/24         [20] area: 0.0.0.0
+                           via 192.168.30.2, vlan300
+N IA 10.20.20.0/24         [20] area: 0.0.0.0
+                           via 192.168.20.1, vlan200
+N    10.30.30.0/24         [10] area: 0.0.0.1
+                           directly attached to eth3
+N    192.168.10.0/24       [20] area: 0.0.0.0
+                           via 192.168.30.2, vlan300
+                           via 192.168.20.1, vlan200
+N    192.168.20.0/24       [10] area: 0.0.0.0
+                           directly attached to vlan200
+N    192.168.30.0/24       [10] area: 0.0.0.0
+                           directly attached to vlan300
+
+============ OSPF router routing table =============
+R    10.10.10.1            [10] area: 0.0.0.0, ABR
+                           via 192.168.30.2, vlan300
+R    10.20.20.1            [10] area: 0.0.0.0, ABR
+                           via 192.168.20.1, vlan200
+
+============ OSPF external routing table ===========
+
+
+
+3. Для изображения ассиметричного роутинга заходим на node01 и вносим изменения в конфигурационный файл ospfd.conf в раздел interface vlan300: ip ospf cost 1000
+Перезагружаем: systemctl restart ospfd.service
+Проверяем и убеждаемся, что стоимость интерфейса, смотрящего на vlan300 увеличились на 1000:
+
+[root@node01 ~]# ip r
+default via 10.0.2.2 dev eth0 proto dhcp metric 100 
+10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric 100 
+10.10.10.0/24 dev eth3 proto kernel scope link src 10.10.10.1 metric 103 
+10.20.20.0/24 via 192.168.30.1 dev vlan300 proto zebra metric 1020 
+10.30.30.0/24 via 192.168.30.1 dev vlan300 proto zebra metric 1010 
+192.168.10.0/24 dev vlan100 proto kernel scope link src 192.168.10.1 metric 400 
+192.168.20.0/24 via 192.168.30.1 dev vlan300 proto zebra metric 1010 
+192.168.30.0/24 dev vlan300 proto kernel scope link src 192.168.30.2 metric 401 
+
+4. Чтобы сделать один из линков "дорогим", но при этом чтобы роутинг был симметричным, оставляем результаты п.3 и добавляем к ним следующие действия.
+Заходим на node03: vagrant ssh node03
+Вносим изменения в конфигурационный файл ospfd.conf в раздел interface vlan300: ip ospf cost 1000
+Перезагружаем: systemctl restart ospfd.service
+
+Проведенные изменения увеличили стоимость интерфейсов, смотрящих во vlan300 на node01 и node02. Соответственно vlan300 станет "дорогим" линком.
+
+
+
