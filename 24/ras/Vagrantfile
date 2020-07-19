@@ -1,0 +1,48 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+  :server => {
+    :box_name => "centos/7",
+    :net => [
+      {ip: '192.168.100.1', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "ovpn-net"},
+    ]
+  },
+  :client => {
+    :box_name => "centos/7",
+    :net => [
+      {ip: '192.168.100.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "ovpn-net"},
+    ]
+  },
+}
+
+Vagrant.configure("2") do |config|
+  MACHINES.each do |boxname, boxconfig|
+    config.vm.define boxname do |box|
+    config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+      box.vm.box = boxconfig[:box_name]
+      box.vm.host_name = boxname.to_s
+
+      config.vm.provider "virtualbox" do |v|
+        v.memory = 256
+      end
+
+      boxconfig[:net].each do |ipconf|
+        box.vm.network "private_network", ipconf
+      end
+
+      if boxconfig.key?(:public)
+        box.vm.network "public_network", boxconfig[:public]
+      end
+
+      box.vm.provision "shell", inline: <<-SHELL
+        mkdir -p ~root/.ssh; cp ~vagrant/.ssh/auth* ~root/.ssh
+      SHELL
+        
+      box.vm.provision "ansible" do |ansible|
+        ansible.playbook = "provision.yml"
+
+      end
+    end
+  end
+end

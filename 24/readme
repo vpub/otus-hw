@@ -1,0 +1,72 @@
+==============[Задание]=================
+
+1. Между двумя виртуалками поднять vpn в режимах
+- tun
+- tap
+Прочуствовать разницу.
+
+2. Поднять RAS на базе OpenVPN с клиентскими сертификатами, подключиться с локальной машины на виртуалку
+
+
+==============[Выполнение]=================
+
+1. TAP эмулирует сетевой адаптер и работает на канальном уровне, оперируя кадрами Ethernet. TUN - сетевой туннель, он работает на сетевом уровне, оперируя IP пакетами. У TUN сравнительно меньшие относительно TAP накладные расходы.
+TAP используется для создания сетевого моста, тогда как TUN для маршрутизации.
+
+2. Разворачиваем стенд tun-tap
+vagrant up
+
+Подключаемся к client
+vagrant ssh client
+
+Запускаем iperf3
+
+По умолчанию настроено на TAP
+
+[root@client ~]# iperf3 -c 10.10.10.1 -t 40 -i 5
+Connecting to host 10.10.10.1, port 5201
+[  4] local 10.10.10.2 port 50580 connected to 10.10.10.1 port 5201
+[ ID] Interval           Transfer     Bandwidth       Retr  Cwnd
+[  4]   0.00-5.01   sec  93.2 MBytes   156 Mbits/sec   19    511 KBytes       
+[  4]   5.01-10.00  sec  90.4 MBytes   152 Mbits/sec   34    374 KBytes       
+[  4]  10.00-15.00  sec  89.0 MBytes   149 Mbits/sec   43    289 KBytes       
+[  4]  15.00-20.00  sec  93.1 MBytes   156 Mbits/sec    9    391 KBytes       
+[  4]  20.00-25.01  sec  97.2 MBytes   163 Mbits/sec   10    352 KBytes       
+[  4]  25.01-30.01  sec  98.0 MBytes   164 Mbits/sec    4    395 KBytes       
+[  4]  30.01-35.01  sec  98.9 MBytes   166 Mbits/sec   29    333 KBytes       
+[  4]  35.01-40.00  sec  94.2 MBytes   158 Mbits/sec   50    264 KBytes       
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bandwidth       Retr
+[  4]   0.00-40.00  sec   754 MBytes   158 Mbits/sec  198             sender
+[  4]   0.00-40.00  sec   752 MBytes   158 Mbits/sec                  receiver
+
+Меняем конфигурацию на использование TUN и перезагружаем сервис. Проверяем:
+
+[root@client ~]# iperf3 -c 10.10.10.1 -t 40 -i 5
+Connecting to host 10.10.10.1, port 5201
+[  4] local 10.10.10.2 port 50588 connected to 10.10.10.1 port 5201
+[ ID] Interval           Transfer     Bandwidth       Retr  Cwnd
+[  4]   0.00-5.00   sec  95.2 MBytes   160 Mbits/sec   48    354 KBytes       
+[  4]   5.00-10.00  sec  92.3 MBytes   155 Mbits/sec    7    402 KBytes       
+[  4]  10.00-15.00  sec  90.3 MBytes   151 Mbits/sec   18    424 KBytes       
+[  4]  15.00-20.01  sec  95.9 MBytes   161 Mbits/sec    5    410 KBytes       
+[  4]  20.01-25.00  sec  93.7 MBytes   157 Mbits/sec   77    361 KBytes       
+[  4]  25.00-30.00  sec  98.7 MBytes   166 Mbits/sec    1    418 KBytes       
+[  4]  30.00-35.01  sec  97.7 MBytes   164 Mbits/sec   39    453 KBytes       
+[  4]  35.01-40.00  sec  92.3 MBytes   155 Mbits/sec    2    358 KBytes       
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bandwidth       Retr
+[  4]   0.00-40.00  sec   756 MBytes   159 Mbits/sec  197             sender
+[  4]   0.00-40.00  sec   755 MBytes   158 Mbits/sec                  receiver
+
+3. Подключаем плагин vagrant для автоматического поднятия VirtualBox Guest Additions
+vagrant plugin install vagrant-vbguest
+
+Разворачивем стенд ras
+vagrant up
+
+Подключаемся к client
+vagrant ssh client
+
+Пробуем пингануть server
+ping 10.10.10.1

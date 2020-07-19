@@ -1,0 +1,70 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+:server => {
+        :box_name => "centos/7",
+        :net => [
+                   {ip: '192.168.100.6', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "vpn"},
+                ]
+  },
+:client => {
+
+        :box_name => "centos/7",
+        :net => [
+                   {ip: '192.168.100.7', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "vpn"},
+                ]
+  },
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+    config.vm.synced_folder "./", "/vagrant"
+    config.vm.define boxname do |box|
+
+        box.vm.provider :virtualbox do |vb|
+          vb.customize ["modifyvm", :id, "--memory", "512"]
+        end
+
+        box.vm.box = boxconfig[:box_name]
+
+        box.vm.host_name = boxname.to_s
+
+        boxconfig[:net].each do |ipconf|
+          box.vm.network "private_network", ipconf
+        end
+
+        box.vm.provision "shell", inline: <<-SHELL
+          mkdir -p ~root/.ssh
+                cp ~vagrant/.ssh/auth* ~root/.ssh
+        SHELL
+
+        case boxname.to_s
+        when "server"
+          box.vm.provision "shell", run: "always", inline: <<-SHELL
+            yum -y install epel-release
+            yum -y install mc vim openvpn iperf3 
+            setenforce 0
+            cp -R /vagrant/openvpn-server.conf /etc/openvpn/server.conf
+            cp -R /vagrant/static.key /etc/openvpn/static.key
+            openvpn --config /etc/openvpn/server.conf &
+            iperf3 -s &
+            SHELL
+        when "client"
+          box.vm.provision "shell", run: "always", inline: <<-SHELL
+            yum -y install epel-release
+            yum -y install mc vim openvpn iperf3
+            setenforce 0
+            cp -R /vagrant/openvpn-client.conf /etc/openvpn/server.conf
+            cp -R /vagrant/static.key /etc/openvpn/static.key
+            openvpn --config /etc/openvpn/server.conf &
+            ip route del default
+            ip route add default via 10.10.10.1
+            SHELL
+        end
+      end
+
+  end
+
+end
