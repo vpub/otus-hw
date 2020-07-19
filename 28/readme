@@ -1,0 +1,150 @@
+==============[Задание]===============
+Необходимо редактировать nginx.conf из этого репозитория (не следует использовать include и править Dockerfile)
+Cделанную работу нужно залить hub.docker.com, при этом content в otus.txt должен содержать в себе название Вашего репозитория hub.docker.com и только его
+Базовое задание должно быть в образе с тегом latest, задание для продвинутых в образе с тегом advanced.
+Самопроверка: docker run -p 80:80 your_account/your_repo:latest (или your_account/your_repo:advanced) - запустит nginx c выполненым заданием. сurl http://localhost/otus.txt - редирект(или ошибка) , открыв ту же страницу в браузере - увидим your_account/your_repo
+
+================[Решение]================
+
+1. Правим nginx.conf и otus.txt (test_otus_webservers)
+
+2. Собираем image из Dockerfile
+
+$ sudo docker build -t webservers .
+Sending build context to Docker daemon  4.608kB
+Step 1/4 : FROM nginx:alpine
+alpine: Pulling from library/nginx
+cbdbe7a5bc2a: Pull complete 
+85434292d1cb: Pull complete 
+75fcb1e58684: Pull complete 
+2a8fe5451faf: Pull complete 
+42ceeab04dd4: Pull complete 
+Digest: sha256:ee8c35a6944eb3cc415cd4cbeddef13927895d4ffa50b976886e3abe48b3f35a
+Status: Downloaded newer image for nginx:alpine
+ ---> ecd67fe340f9
+Step 2/4 : COPY nginx.conf /etc/nginx/nginx.conf
+ ---> 7d13c136c023
+Step 3/4 : COPY otus.txt  /opt/otus.txt
+ ---> c2dcc7bc642a
+Step 4/4 : CMD ["nginx","-g","daemon off;"]
+ ---> Running in 0ebe8e04d804
+Removing intermediate container 0ebe8e04d804
+ ---> e9180c43ed89
+Successfully built e9180c43ed89
+Successfully tagged webservers:latest
+
+3. Проверяем доступные image
+
+$ sudo docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+webservers          latest              e9180c43ed89        33 seconds ago      21.6MB
+nginx               alpine              ecd67fe340f9        8 days ago          21.6MB
+
+4. Запускаем контейнер
+
+$ sudo docker run --rm -d -p 80:80 webservers
+8183ecc9ace5d49c8422247f0f1e5e2f4d6072e46fc8a2a8fc4ae3067565ddac
+
+5. Проверяем запущенные контейнеры
+
+$ sudo docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                NAMES
+8183ecc9ace5        webservers          "/docker-entrypoint.…"   7 minutes ago       Up 7 minutes        0.0.0.0:80->80/tcp   silly_visvesvaraya
+
+6. Проверяем вывод - curl http://localhost/otus.txt -i -L
+
+$ curl http://localhost/otus.txt -i -L
+HTTP/1.1 302 Moved Temporarily
+Server: nginx/1.19.1
+Date: Sun, 19 Jul 2020 09:30:26 GMT
+Content-Type: text/html
+Content-Length: 145
+Connection: keep-alive
+Location: http://localhost/addcookie
+Set-Cookie: first_uri=/otus.txt
+
+HTTP/1.1 302 Moved Temporarily
+Server: nginx/1.19.1
+Date: Sun, 19 Jul 2020 09:30:26 GMT
+Content-Type: text/html
+Content-Length: 145
+Connection: keep-alive
+Location: 
+Set-Cookie: access=secretkey
+
+<html>
+<head><title>302 Found</title></head>
+<body>
+<center><h1>302 Found</h1></center>
+<hr><center>nginx/1.19.1</center>
+</body>
+</html>
+
+7. Проверяем вывод с cookie - curl http://localhost/otus.txt -i -L -b cookie -c cookie
+
+$ curl http://localhost/otus.txt -i -L -b cookie -c cookie
+HTTP/1.1 302 Moved Temporarily
+Server: nginx/1.19.1
+Date: Sun, 19 Jul 2020 09:31:20 GMT
+Content-Type: text/html
+Content-Length: 145
+Connection: keep-alive
+Location: http://localhost/addcookie
+Set-Cookie: first_uri=/otus.txt
+
+HTTP/1.1 302 Moved Temporarily
+Server: nginx/1.19.1
+Date: Sun, 19 Jul 2020 09:31:20 GMT
+Content-Type: text/html
+Content-Length: 145
+Location: http://localhost/otus.txt
+Connection: keep-alive
+Set-Cookie: access=secretkey
+
+HTTP/1.1 200 OK
+Server: nginx/1.19.1
+Date: Sun, 19 Jul 2020 09:31:20 GMT
+Content-Type: text/plain
+Content-Length: 21
+Last-Modified: Sun, 19 Jul 2020 09:25:42 GMT
+Connection: keep-alive
+ETag: "5f141196-15"
+Accept-Ranges: bytes
+
+test_otus_webservers
+
+8. Заливаем свой image на hub.docker.com
+
+docker login
+docker tag webservers vilmu/webservers
+docker push vilmu/webservers
+
+9. Осуществляем проверку
+
+$ sudo docker pull vilmu/webservers
+Using default tag: latest
+latest: Pulling from vilmu/webservers
+cbdbe7a5bc2a: Already exists 
+85434292d1cb: Already exists 
+75fcb1e58684: Already exists 
+2a8fe5451faf: Already exists 
+42ceeab04dd4: Already exists 
+04359ac96b46: Pull complete 
+bb1cba16e49d: Pull complete 
+Digest: sha256:206b5f53dac7b43877cc3f4dc44337a31c038ef39e89386566b4192c537bf0a7
+Status: Downloaded newer image for vilmu/webservers:latest
+docker.io/vilmu/webservers:latest
+
+$ sudo docker run -d -p 80:80 vilmu/webservers
+8932afd693d5245b3f6233541ca7be72d9bb1794b25880f55a9d5300ba56581f
+
+$ curl http://localhost/otus.txt
+<html>
+<head><title>302 Found</title></head>
+<body>
+<center><h1>302 Found</h1></center>
+<hr><center>nginx/1.19.1</center>
+</body>
+</html>
+
+Открываем в браузере и видим: test_otus_webservers
