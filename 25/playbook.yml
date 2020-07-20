@@ -1,0 +1,12 @@
+---
+- hosts: inetRouter:centralRouter
+  name: bond
+  become: yes
+  roles:
+    - role: bond
+
+- hosts: testClient1,testClient2,testServer1,testServer2
+  name: vlan
+  become: yes
+  roles:
+    - role: vlan
