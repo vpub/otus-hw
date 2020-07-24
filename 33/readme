@@ -1,0 +1,100 @@
+=========[Задание]===========
+
+развернуть InnoDB кластер в docker
+* в docker swarm
+
+в качестве ДЗ принимает репозиторий с docker-compose
+который по кнопке разворачивает кластер и выдает порт наружу
+
+
+=========[Выполнение]===========
+
+1. Разворачиваем стенд
+vagrant up
+
+2. Заходим на innodbcluster
+vagrant ssh
+sudo -i
+
+3. Переходим в каталог с конфигами и проверяем состояние контейнеров
+cd /opt/
+docker-compose ps
+
+[root@innodbcluster opt]# docker-compose ps
+       Name                     Command               State                          Ports                      
+----------------------------------------------------------------------------------------------------------------
+opt_mysql-router_1   /run.sh mysqlrouter              Up       0.0.0.0:6446->6446/tcp, 64460/tcp, 6447/tcp,     
+                                                               64470/tcp                                        
+opt_mysql-shell_1    /run.sh mysqlsh                  Exit 0                                                    
+opt_node01_1         /entrypoint.sh mysqld --se ...   Up       0.0.0.0:3301->3306/tcp, 33060/tcp                
+opt_node02_1         /entrypoint.sh mysqld --se ...   Up       0.0.0.0:3302->3306/tcp, 33060/tcp                
+opt_node03_1         /entrypoint.sh mysqld --se ...   Up       0.0.0.0:3303->3306/tcp, 33060/tcp  
+
+Нода mysql-shell вспомогательная и нужна была только на время инсталяции кластера.
+
+4. Проверяем состояние кластера:
+
+[root@innodbcluster opt]# mysqlsh 
+MySQL Shell 8.0.21
+
+Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
+Other names may be trademarks of their respective owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+
+ MySQL  JS > shell.connect('localhost:6446', 'pass')
+Creating a session to 'root@localhost:6446'
+Fetching schema names for autocompletion... Press ^C to stop.
+Your MySQL connection id is 1588
+Server version: 8.0.21 MySQL Community Server - GPL
+No default schema selected; type \use <schema> to set one.
+<ClassicSession:root@localhost:6446>
+
+
+ MySQL  localhost:6446 ssl  JS > dba.getCluster().status()
+WARNING: No cluster change operations can be executed because the installed metadata version 1.0.1 is lower than the version required by Shell which is version 2.0.0. Upgrade the metadata to remove this restriction. See \? dba.upgradeMetadata for additional details.
+{
+    "clusterName": "InnoDBCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "primary": "node01:3306", 
+        "ssl": "REQUIRED", 
+        "status": "OK", 
+        "statusText": "Cluster is ONLINE and can tolerate up to ONE failure.", 
+        "topology": {
+            "node01:3306": {
+                "address": "node01:3306", 
+                "mode": "n/a", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "shellConnectError": "MySQL Error 2005 (HY000): Unknown MySQL server host 'node01' (2)", 
+                "status": "ONLINE", 
+                "version": "8.0.21"
+            }, 
+            "node02:3306": {
+                "address": "node02:3306", 
+                "mode": "n/a", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "shellConnectError": "MySQL Error 2005 (HY000): Unknown MySQL server host 'node02' (2)", 
+                "status": "ONLINE", 
+                "version": "8.0.21"
+            }, 
+            "node03:3306": {
+                "address": "node03:3306", 
+                "mode": "n/a", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "shellConnectError": "MySQL Error 2005 (HY000): Unknown MySQL server host 'node03' (2)", 
+                "status": "ONLINE", 
+                "version": "8.0.21"
+            }
+        }, 
+        "topologyMode": "Single-Primary"
+    }, 
+    "groupInformationSourceMember": "4a5f13c45668:3306"
+}
+
+PS. По мотивам https://mysqlrelease.com/2018/03/docker-compose-setup-for-innodb-cluster/

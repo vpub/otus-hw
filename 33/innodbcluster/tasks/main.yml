@@ -1,0 +1,53 @@
+---
+    - name: Disable SELinux
+      selinux:
+        policy: targeted
+        state: permissive
+
+    - name: Install epel-release
+      yum:
+        name: epel-release
+        state: present
+
+    - name: Install docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install docker-compose and utils
+      yum:
+        name:
+        - docker-compose
+        - vim
+        - mc
+        state: present
+
+    - name: Copy docer-compose and cluster configs
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: '0644'
+        owner: root
+        group: root
+      with_items:
+        - {src: setupCluster.j2 , dest: /opt/setupCluster.js }
+        - {src: docker-compose.j2 , dest: /opt/docker-compose.yml}
+
+    - name: Start compose containers
+      command: docker-compose -f /opt/docker-compose.yml up -d
+
+    - name: Install mysql community repository
+      yum:
+        name: https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
+        state: present
+
+    - name: Install mysql-shell
+      yum:
+        name: mysql-shell
+        state: present

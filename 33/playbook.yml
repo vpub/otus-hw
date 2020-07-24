@@ -1,0 +1,7 @@
+---
+- name: Install nnodbcluster
+  hosts: all
+  become: true
+
+  roles:
+   - innodbcluster
