@@ -1,0 +1,73 @@
+---
+- name: Copy file with owner and permissions
+  copy:
+    src: vagrant
+    dest: /etc/sudoers.d/vagrant
+    owner: root
+    group: root
+    mode: '0440'
+
+- name: Appending the user 'vagrant' to the group 'wheel'
+  user:
+    name: vagrant
+    groups: wheel
+    append: yes
+
+- name: Install vim
+  yum:
+    name: vim
+    state: latest  
+
+- name: Install the firewall
+  yum:
+    name: firewalld
+    state: latest    
+
+- name: Start the firewall
+  service:
+    name: firewalld 
+    state: started
+    enabled: true 
+
+- name: Change hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: '.*server.test.loc.*'
+    line: '192.168.100.101 server.test.loc server'
+
+- name: Install nss
+  yum:
+    name:  nss
+    state: latest
+
+- name: Install ipa-server
+  yum:
+    name:  ipa-server
+    state: latest
+
+- name: Install ipa-server-dns
+  yum:
+    name:  ipa-server-dns
+    state: latest
+
+- name: Ipa-server-install
+  shell:
+    cmd: ipa-server-install --domain=test.loc --realm=TEST.LOC --ds-password=password --admin-password=password --hostname=server.test.loc --ip-address=192.168.100.101 --reverse-zone=100.168.192.in-addr.arpa. --forwarder=1.1.1.1 --setup-dns --unattended
+
+- firewalld:
+    service: freeipa-ldap
+    permanent: yes
+    immediate: yes
+    state: enabled    
+
+- firewalld:
+    service: freeipa-ldaps
+    permanent: yes
+    immediate: yes
+    state: enabled    
+
+- firewalld:
+    service: dns
+    permanent: yes
+    immediate: yes
+    state: enabled
