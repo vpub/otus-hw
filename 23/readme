@@ -25,19 +25,29 @@ vagrant up
 
 2. Заходим на client1
 
-[root@client1 ~]# host www.newdns.lab
-www.newdns.lab has address 192.168.50.15
-www.newdns.lab has address 192.168.50.16
-[root@client1 ~]# host web1.dns.lab
-web1.dns.lab has address 192.168.50.15
-[root@client1 ~]# host web2.dns.lab
-Host web2.dns.lab not found: 3(NXDOMAIN)
+[root@client1 ~]# dig web1.dns.lab +short @192.168.50.10
+192.168.50.15
+[root@client1 ~]# dig web2.dns.lab +short @192.168.50.10
+[root@client1 ~]# dig www.newdns.lab +short @192.168.50.10
+192.168.50.15
+192.168.50.16
+[root@client1 ~]# dig web1.dns.lab +short @192.168.50.11
+192.168.50.15
+[root@client1 ~]# dig web2.dns.lab +short @192.168.50.11
+[root@client1 ~]# dig www.newdns.lab +short @192.168.50.11
+192.168.50.16
+192.168.50.15
 
 3. Заходим на client2
 
-[root@client2 ~]# host www.newdns.lab
-Host www.newdns.lab not found: 3(NXDOMAIN)
-[root@client2 ~]# host web1.dns.lab
-web1.dns.lab has address 192.168.50.15
-[root@client2 ~]# host web2.dns.lab
-web2.dns.lab has address 192.168.50.16
+[root@client2 ~]# dig web1.dns.lab +short @192.168.50.10
+192.168.50.15
+[root@client2 ~]# dig web2.dns.lab +short @192.168.50.10
+192.168.50.16
+[root@client2 ~]# dig www.newdns.lab +short @192.168.50.10
+[root@client2 ~]# dig web1.dns.lab +short @192.168.50.11
+192.168.50.15
+[root@client2 ~]# dig web2.dns.lab +short @192.168.50.11
+192.168.50.16
+[root@client2 ~]# dig www.newdns.lab +short @192.168.50.11
+
