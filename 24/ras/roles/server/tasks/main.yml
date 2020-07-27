@@ -35,9 +35,9 @@
     /usr/share/easy-rsa/3/easyrsa --batch sign-req server server 
     /usr/share/easy-rsa/3/easyrsa --batch gen-req client nopass
     /usr/share/easy-rsa/3/easyrsa --batch sign-req client client
-    cp /etc/openvpn/pki/ca.crt /vagrant/roles/ovpnclient/files/
-    cp /etc/openvpn/pki/issued/client.crt /vagrant/roles/ovpnclient/files/
-    cp /etc/openvpn/pki/private/client.key /vagrant/roles/ovpnclient/files/
+    cp /etc/openvpn/pki/ca.crt /vagrant/roles/client/files/
+    cp /etc/openvpn/pki/issued/client.crt /vagrant/roles/client/files/
+    cp /etc/openvpn/pki/private/client.key /vagrant/roles/client/files/
   args:
     chdir: /etc/openvpn/
 
