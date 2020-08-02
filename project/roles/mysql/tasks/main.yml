@@ -1,0 +1,30 @@
+---
+- name: Install pip PyMySQL
+  pip:
+    name:
+      - PyMySQL
+      - cryptography
+    state: present
+
+- name: Create DB
+  mysql_db:
+    login_user: "{{ icluster_user }}"
+    login_password: "{{ icluster_passwd }}"
+    login_port: 6446
+    login_host: "127.0.0.1"
+    name: drupaldb
+    collation: utf8mb4_general_ci
+    encoding: utf8mb4
+
+- name: Create user
+  mysql_user:
+    login_user: "{{ icluster_user }}"
+    login_password: "{{ icluster_passwd }}"
+    login_port: 6446
+    login_host: "127.0.0.1"
+    name:     "{{ drupal_db_user }}"
+    password: "{{ drupal_db_passwd }}"
+    priv:     "drupaldb.*:ALL"
+    host: "%"
+    state: present
+

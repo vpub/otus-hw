@@ -1,0 +1,23 @@
+---
+- name: Setup IUS-repo
+  yum:
+    name: https://repo.ius.io/ius-release-el7.rpm
+    state: present
+
+- name: Setup haproxy
+  yum:
+    name: haproxy20
+    state: present
+
+- name: Setup config for haproxy
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    validate: /usr/sbin/haproxy -c -f %s
+
+- name: Restart haproxy
+  service:
+    name: haproxy
+    state: restarted
+    enabled: yes
+

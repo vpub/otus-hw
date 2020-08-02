@@ -1,0 +1,4 @@
+---
+haproxy_certs_dir: '/var/drupal/certs'
+haproxy_prep_dir: '/var/drupal/prep'
+

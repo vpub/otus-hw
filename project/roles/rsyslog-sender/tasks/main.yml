@@ -1,0 +1,22 @@
+---
+- name: Rsyslog config to send alerts
+  blockinfile:
+    path: /etc/rsyslog.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK: enable remote logging"
+    content: |
+      # ### begin forwarding rule ###
+      *.* @192.168.10.250:514
+      # ### end of the forwarding rule ###
+
+- name: Copy drupal-accesslog
+  copy: src=drupal_access.conf dest=/etc/rsyslog.d/
+
+- name: Copy drupal-errorlog
+  copy: src=drupal_error.conf dest=/etc/rsyslog.d/
+
+- name: Rsyslog restart
+  systemd:
+    name: rsyslog
+    state: restarted
+
+

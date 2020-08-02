@@ -1,0 +1,65 @@
+---
+- name: Download Drupal
+  get_url:
+   url: http://ftp.drupal.org/files/projects/drupal-7.37.tar.gz
+   dest: /srv/drupal.tar.gz
+  run_once: true
+
+- name: Extract archive
+  unarchive:
+    src: /srv/drupal.tar.gz
+    dest: /var/www/html/
+    remote_src: yes
+  run_once: true
+
+- name: Clean drupal archieve
+  file:
+    state: absent
+    path: /srv/drupal.tar.gz
+
+- name: Rename drupal catalogue
+  command: mv /var/www/html/drupal-7.37/ /var/www/html/drupal
+
+- name: Copy Drupal config file
+  command: cp /var/www/html/drupal/sites/default/default.settings.php /var/www/html/drupal/sites/default/settings.php
+
+- name: create files directory 
+  file:
+    path: /var/www/html/drupal/sites/default/files 
+    state: directory
+
+- name: chown -R drupal directory
+  file:
+    path: /var/www/html/
+    owner: apache
+    group: apache
+#    mode: 0755
+    recurse: yes
+
+- name: install SEManage
+  yum: pkg=policycoreutils-python state=present
+
+- name: set the SELinux policy
+  command: semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/html/drupal(/.*)?"
+  tags:
+  - skip_ansible_lint
+
+- name: set the SELinux policy
+  command: semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/html/drupal/sites/default/settings.php"
+  tags:
+  - skip_ansible_lint
+
+- name: set the SELinux policy
+  command: semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/html/drupal/sites/default/files"
+  tags:
+  - skip_ansible_lint
+
+- name: set the SELinux policy
+  command: restorecon -Rv /var/www/html/drupal
+  tags:
+  - skip_ansible_lint
+
+- name: set the SELinux policy
+  command: restorecon -v /var/www/html/drupal/sites/default/settings.php
+  tags:
+  - skip_ansible_lint

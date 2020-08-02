@@ -1,0 +1,29 @@
+---
+- name: Rsyslog config
+  lineinfile:
+    path: /etc/rsyslog.conf
+    regexp: '^#({{ item.regexp }}.*)'
+    line: '\1'
+    backrefs: yes
+  loop:
+    - { regexp: '\$ModLoad imudp' }
+    - { regexp: '\$UDPServerRun 514' }
+
+- name: Rsyslog restart
+  systemd:
+    name: rsyslog
+    state: restarted
+
+- name: Rsyslog temp config
+  blockinfile:
+    path: /etc/rsyslog.conf
+    content: |
+      $template RemoteLogs,"/var/log/%HOSTNAME%/%PROGRAMNAME%.log"
+      *.* ?RemoteLogs
+      & stop
+    insertafter: '$UDPServerRun 514'
+
+- name: Rsyslog restart
+  systemd:
+    name: rsyslog
+    state: restarted

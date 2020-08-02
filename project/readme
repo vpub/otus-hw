@@ -1,0 +1,49 @@
+============[updated v.01]===============
+Добавлены 2 ноды:
+- nfsserver 10.15
+- nfsbackup 10.16
+
+На backend01 / backend02 примонтированы nfs shared directories для файлов drupal (/var/www/html/drupal/site/default/files)
+
+Бэкап файлов осуществляется архивированием и копированием в отдельное хранилище на ноде nfsbackup по заданию в cron ежедневно.
+
+
+============[к защите]===============
+haproxy01 10.100 / haproxy02 10.200 (haproxy, keepalived)  ---    monitoring 10.250 (rsyslog, bacula)
+
+backend01 10.10 / backend02 10.12 (httpd, php, drupal, redis, mysql-router)
+
+sqlnode01 10.21 / sqlnode02 10.22 / sqlnode03 10.23 (innodb cluster)
+
+В браузере:
+192.168.10.80  (установка drupal)
+192.168.10.80:5000/stat/  (посмотреть статистику haproxy  stat/statpass)
+
+На backend01:
+mysqlsh
+shell.connect('cluster@127.0.0.1:6446', 'pass123!')
+mcdba.getCluster().status()
+#/etc/rsyslog.d/*.conf по отправке логов
+#redis-cli ping
+PONG
+#redis-cli
+set mykey somevalue
+get mykey
+keys *
+/var/log/redis/redis-server.log
+
+На sqlnode01:
+mysql -p
+pass -- r7pCM8}t!J{1GcI&
+show databases;
+use drupaldb;
+show variables;
+create database NAME;
+drop database NAME;
+
+На monitoring:
+cd /var/log/{название ноды}/logs
+bconsole
+*status dir
+*run
+*restore

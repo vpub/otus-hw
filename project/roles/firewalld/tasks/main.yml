@@ -1,0 +1,93 @@
+---
+- name: Firewalld enable
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Firewalld open ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  with_items:
+    - '22/tcp'
+    - '443/tcp'
+    - '80/tcp'
+    - '6379/tcp'
+  when: >
+        ( ansible_hostname == 'backend01' ) or
+        ( ansible_hostname == 'backend02' )
+
+- name: Firewalld ports for mySQL
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  with_items:
+    - '22/tcp'
+    - '3306/tcp'
+    - '33060/tcp'
+    - '33061/tcp'
+    - '42000/tcp'
+    - '42001/tcp'
+  when: >
+        ( ansible_hostname == 'sqlnode01' ) or
+        ( ansible_hostname == 'sqlnode02' ) or
+        ( ansible_hostname == 'sqlnode03' )
+
+- name: Firewalld ports for haproxy
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  with_items:
+    - '22/tcp'
+    - '80/tcp'
+    - '443/tcp'
+    - '5000/tcp'
+  when: >
+        ( ansible_hostname == 'haproxy01' ) or
+        ( ansible_hostname == 'haproxy02' )
+
+- name: Firewalld ports for VRRP
+  firewalld:
+    rich_rule: rule protocol value="vrrp" accept
+    permanent: true
+    immediate: true
+    state: enabled
+  when: >
+        ( ansible_hostname == 'haproxy01' ) or
+        ( ansible_hostname == 'haproxy02' )
+
+- name: Firewalld ports 22/80/443/514
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  with_items:
+    - '22/tcp'
+    - '80/tcp'
+    - '443/tcp'
+    - '514/udp'
+  when: ansible_hostname == 'monitoring'
+
+- name: firewall rules for nfs 
+  firewalld:
+    service: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  with_items:
+    - nfs
+    - mountd
+    - rpc-bind
+  when: >
+      ( ansible_hostname == 'backend01' ) or
+      ( ansible_hostname == 'backend02' ) or
+      ( ansible_hostname == 'nfsserver' ) or
+      ( ansible_hostname == 'nfsbackup' )
