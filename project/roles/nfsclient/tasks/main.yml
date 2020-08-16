@@ -1,7 +1,12 @@
 ---
+- name: create files directory
+  file:
+    path: /var/www/html/wordpress/wp-content
+    state: directory
+
 - name: mount nfs share
   mount:
-    path: /var/www/html/drupal/sites/default/files
+    path: /var/www/html/wordpress/wp-content
     src: 192.168.10.15:/mnt/storage
     fstype: nfs
     opts: noauto,x-systemd.automount,x-systemd.device-timeout=10,timeo=14
@@ -9,7 +14,7 @@
 
 - name: chown -R files directory
   file:
-    path: /var/www/html/drupal/sites/default/files
+    path: /var/www/html/wordpress/wp-content
     owner: apache
     group: apache
     mode: 0755

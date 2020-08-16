@@ -46,9 +46,9 @@
     - mysql
     - apache
     - redis
-    - drupal
-    - php
     - nfsclient
+    - wordpress
+    - php
 
 - name: Install backend02
   hosts: backend02
@@ -56,9 +56,9 @@
   roles:
     - apache
     - redis
-    - drupal
-    - php
     - nfsclient
+    - wordpress
+    - php
 
 - name: Install haproxies
   hosts:
