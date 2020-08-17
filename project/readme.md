@@ -68,7 +68,7 @@ sqlnode01 10.21 / sqlnode02 10.22 / sqlnode03 10.23 (innodb cluster)
 192.168.10.80:5000/stat/  (посмотреть статистику haproxy  stat/statpass)
 
 На backend01:
-`mysqlsh
+```mysqlsh
 shell.connect('cluster@127.0.0.1:6446', 'pass123!')
 mcdba.getCluster().status()
 #/etc/rsyslog.d/*.conf по отправке логов
@@ -78,20 +78,20 @@ PONG
 set mykey somevalue
 get mykey
 keys *
-/var/log/redis/redis-server.log`
+/var/log/redis/redis-server.log```
 
 На sqlnode01:
-`mysql -p
+```mysql -p
 pass -- r7pCM8}t!J{1GcI&
 show databases;
 use drupaldb;
 show variables;
 create database NAME;
-drop database NAME;`
+drop database NAME;```
 
 На monitoring:
-`cd /var/log/{название ноды}/logs
+```cd /var/log/{название ноды}/logs
 bconsole
 *status dir
 *run
-*restore`
+*restore```
